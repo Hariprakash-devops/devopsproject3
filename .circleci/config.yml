@@ -63,7 +63,7 @@ jobs:
           keys: [frontend-build]
       - run:
           name: Build front-end
-          working_directory: ./backend
+          working_directory: ./frontend
           command: 
             npm run build            
       - save_cache:
