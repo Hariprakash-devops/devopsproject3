@@ -135,7 +135,7 @@ jobs:
       - run:
           name: frontend security check
           working_directory: ./frontend
-          command: npm audit --audit-level=critical
+          command: npm audit --audit-level=critical --force
 # -----------------------------  Test front end for security ----------            
   scan-backend:
     <<: *dok_node
@@ -144,7 +144,7 @@ jobs:
       - run:
           name: backend security check
           working_directory: ./backend
-          command: npm audit --audit-level=critical
+          command: npm audit --audit-level=critical --force
 
 # --------------------------------------------------------------------------------
 #
