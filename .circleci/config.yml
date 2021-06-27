@@ -2,17 +2,14 @@ version: 2.1
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 # defaults (like global variables dubstiuted below)
 #  ------------------------------------------------------------------------------------------------------------------------------------------
-defaults: &dok_node
+docvarnode: &dok_node
     docker:
       - image: circleci/node:13.8.0
 
-defaults: &dok_awscli
+docvaraws: &dok_awscli
     docker:
       - image: circleci/node:13.8.0
-
-defaults: &dok_common
-    docker:
-      - image: circleci/node:13.8.0      
+    
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #  list of commands used in job 
 #
