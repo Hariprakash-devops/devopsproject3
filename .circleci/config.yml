@@ -126,6 +126,7 @@ jobs:
           name: Run tests with JUnit 
           working_directory: ./frontend
           command:               
+              npm i
               npm test
           environment:
             JEST_JUNIT_OUTPUT_DIR: ./testres
@@ -140,7 +141,7 @@ jobs:
   test-backend:
     <<: *dok_node
     environment: 
-      MY_STEP_NAME: "Build backend"    
+      MY_STEP_NAME: "Test backend"    
     steps:
       - checkout
       - restore_cache:
@@ -149,6 +150,7 @@ jobs:
           name: Run tests with JUnit
           working_directory: ./backend
           command: 
+              npm i
               npm test
           environment:
             JEST_JUNIT_OUTPUT_DIR: ./testres
@@ -171,7 +173,9 @@ jobs:
       - run:
           name: frontend security check
           working_directory: ./frontend
-          command: npm audit fix --audit-level=critical --force
+          command: 
+            npm i
+            npm audit fix --audit-level=critical --force
       - slack/notify:
           <<: *slack_msg
 
@@ -187,7 +191,8 @@ jobs:
       - run:
           name: backend security check
           working_directory: ./backend
-          command: npm audit fix --audit-level=critical --force
+          command: 
+            npm audit fix --audit-level=critical --force
       - slack/notify:
           <<: *slack_msg
 # --------------------------------------------------------------------------------
