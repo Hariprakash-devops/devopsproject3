@@ -20,7 +20,7 @@ slackvarfail: &slack_msg
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Udapeople build STEP : << MY_STEP_NAME >> Failure #<< pipeline.number >> for << pipeline.project.git_url >> / << pipeline.git.branch >> ",
+                      "text": "Udapeople build STEP : ${MY_STEP_NAME} Failure #<< pipeline.number >> for << pipeline.project.git_url >> / << pipeline.git.branch >> ",
                       "emoji": true }]
                 }
               ]
@@ -75,8 +75,6 @@ jobs:
 # -----------------------------  Build front end ----------------------
   build-frontend:
     <<: *dok_node
-    environment: 
-      MY_STEP_NAME: "Build frontend"
     steps:
       - checkout
       - restore_cache:
@@ -85,8 +83,9 @@ jobs:
           name: Build front-end
           working_directory: ./frontend
           command: 
+            echo "Build frontend" >> $MY_STEP_NAME
             npm i
-            npm run build            
+            npm run build                        
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build          
@@ -96,8 +95,6 @@ jobs:
 # -----------------------------  Build back end ----------------------
   build-backend:
     <<: *dok_node
-    environment: 
-      MY_STEP_NAME: "Build backend"
     steps:
       - checkout
       - restore_cache:
@@ -106,6 +103,7 @@ jobs:
           name: Back-end build
           working_directory: ./backend
           command: 
+             echo "Build backend" >> $MY_STEP_NAME
              npm i
              npm run build             
       - save_cache:
@@ -116,8 +114,6 @@ jobs:
 # -----------------------------  Test front end  ----------------------
   test-frontend:
     <<: *dok_node
-    environment: 
-      MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
       - run:
@@ -139,9 +135,7 @@ jobs:
 
 # -----------------------------  Test back end  ----------------------                
   test-backend:
-    <<: *dok_node
-    environment: 
-      MY_STEP_NAME: "Build backend"    
+    <<: *dok_node    
     steps:
       - checkout
       - run:
