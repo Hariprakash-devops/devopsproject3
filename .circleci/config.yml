@@ -120,14 +120,12 @@ jobs:
       MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
-      - run:
-          name: Junit coverage report
-          working_directory: ./frontend
-          command: npm install --save-dev jest-junit
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Run tests with JUnit 
           working_directory: ./frontend
-          command: 
+          command:               
               npm test
           environment:
             JEST_JUNIT_OUTPUT_DIR: ./testres
@@ -145,10 +143,8 @@ jobs:
       MY_STEP_NAME: "Build backend"    
     steps:
       - checkout
-      - run:
-          name: Junit coverage reporte
-          working_directory: ./backend
-          command: npm install --save-dev jest-junit
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Run tests with JUnit
           working_directory: ./backend
@@ -170,6 +166,8 @@ jobs:
       MY_STEP_NAME: "Security scan frontend"    
     steps:
       - checkout
+      - restore_cache:
+          keys: [frontend-build]      
       - run:
           name: frontend security check
           working_directory: ./frontend
@@ -183,7 +181,9 @@ jobs:
     environment: 
       MY_STEP_NAME: "Security scan backend"    
     steps:
-      - checkout      
+      - checkout  
+      - restore_cache:
+          keys: [backend-build]          
       - run:
           name: backend security check
           working_directory: ./backend
