@@ -54,6 +54,35 @@ commands:
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 
 jobs:
+
+# -----------------------------  Build front end and back end dependancies ----------------------
+
+  build-frontend--dependency:
+   executor: node
+   steps:
+      - checkout
+      - run:
+          name: npm install
+          working_directory: ./frontend
+          command: ls -la && npm install
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/node_modules
+
+  build-backend--dependency:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: npm install
+          working_directory: ./backend
+          command: ls -la && npm install
+      - persist_to_workspace:
+          root: .
+          paths:
+            - backend/node_modules
+
 # -----------------------------  Build front end ----------------------
   build-frontend:
     <<: *dok_node
@@ -152,8 +181,12 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
+      - build-frontend--dependency
+      - build-backend--dependency
+      - build-frontend:
+          requires: [build-frontend--dependency]
+      - build-backend:
+          requires: [build-backend--dependency]
       - test-frontend:
           requires: [build-frontend]
       - test-backend:
