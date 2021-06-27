@@ -80,7 +80,7 @@ jobs:
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Failure in building front-end",
+                      "text": "Udapeople : Failure in building front-end",
                       "emoji": true }]
                 }
               ]
@@ -111,7 +111,7 @@ jobs:
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Failure in building front-end",
+                      "text": "Udapeople : Failure in building back-end",
                       "emoji": true }]
                 }
               ]
@@ -143,7 +143,7 @@ jobs:
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Failure in testing front-end",
+                      "text": "Udapeople : Failure in testing front-end",
                       "emoji": true }]
                 }
               ]
@@ -175,7 +175,7 @@ jobs:
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Failure in building front-end",
+                      "text": "Udapeople : Failure in testing back-end  << pipeline.id >>",
                       "emoji": true }]
                 }
               ]
@@ -197,7 +197,7 @@ jobs:
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Failure in building front-end",
+                      "text": "Udapeople : Failure in security scan for front-end << pipeline.number >>",
                       "emoji": true }]
                 }
               ]
@@ -219,7 +219,7 @@ jobs:
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Failure in building front-end",
+                      "text": "Failure in security scan for back-end",
                       "emoji": true }]
                 }
               ]
