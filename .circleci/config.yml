@@ -75,6 +75,8 @@ jobs:
 # -----------------------------  Build front end ----------------------
   build-frontend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
       - restore_cache:
@@ -82,8 +84,7 @@ jobs:
       - run:
           name: Build front-end
           working_directory: ./frontend
-          command: 
-            echo "Build frontend" >> $MY_STEP_NAME
+          command:             
             npm i
             npm run build                        
       - save_cache:
@@ -95,6 +96,8 @@ jobs:
 # -----------------------------  Build back end ----------------------
   build-backend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
       - restore_cache:
@@ -102,8 +105,7 @@ jobs:
       - run:
           name: Back-end build
           working_directory: ./backend
-          command: 
-             echo "Build backend" >> $MY_STEP_NAME
+          command:              
              npm i
              npm run build             
       - save_cache:
@@ -114,6 +116,8 @@ jobs:
 # -----------------------------  Test front end  ----------------------
   test-frontend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
       - run:
@@ -135,7 +139,9 @@ jobs:
 
 # -----------------------------  Test back end  ----------------------                
   test-backend:
-    <<: *dok_node    
+    <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Build backend"    
     steps:
       - checkout
       - run:
