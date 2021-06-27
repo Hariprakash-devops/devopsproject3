@@ -11,6 +11,23 @@ docvarnode: &dok_node
 docvaraws: &dok_awscli
     docker:
       - image: circleci/aws-cli    
+
+slackvarfail: &slack_msg
+      - slack/notify:
+          event: fail
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "fields": [{"type": "plain_text",
+                      "text": "Udapeople : << MY_STEP_NAME >> Build Failure # << pipeline.number >> for << pipeline.git.branch >> work flow id : << CIRCLE_WORKFLOW_ID >>",
+                      "emoji": true }]
+                }
+              ]
+            } 
+
+
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #  list of commands used in job 
 #
@@ -59,6 +76,8 @@ jobs:
 # -----------------------------  Build front end ----------------------
   build-frontend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Build frontend"
     steps:
       - checkout
       - restore_cache:
@@ -71,25 +90,14 @@ jobs:
             npm run build            
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-build
-      - slack/notify:
-          event: fail
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [{"type": "plain_text",
-                      "text": "Udapeople : Failure in building front-end",
-                      "emoji": true }]
-                }
-              ]
-            }
-          
+          key: frontend-build          
+      <<: *slack_msg          
 
 # -----------------------------  Build back end ----------------------
   build-backend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Build backend"
     steps:
       - checkout
       - restore_cache:
@@ -103,22 +111,12 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-      - slack/notify:
-          event: fail
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [{"type": "plain_text",
-                      "text": "Udapeople : Failure in building back-end",
-                      "emoji": true }]
-                }
-              ]
-            }          
+      <<: *slack_msg       
 # -----------------------------  Test front end  ----------------------
   test-frontend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Test frontend"
     steps:
       - checkout
       - run:
@@ -135,22 +133,13 @@ jobs:
           path: ./frontend/testres
       - store_artifacts:
           path: ./frontend/testres
-      - slack/notify:
-          event: fail
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [{"type": "plain_text",
-                      "text": "Udapeople : Failure in testing front-end",
-                      "emoji": true }]
-                }
-              ]
-            }
+      <<: *slack_msg
+
 # -----------------------------  Test back end  ----------------------                
   test-backend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Build backend"    
     steps:
       - checkout
       - run:
@@ -167,63 +156,33 @@ jobs:
           path: ./backend/testres
       - store_artifacts:
           path: ./backend/testres
-      - slack/notify:
-          event: fail
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [{"type": "plain_text",
-                      "text": "Udapeople : Failure in testing back-end  << pipeline.id >>",
-                      "emoji": true }]
-                }
-              ]
-            }
+      <<: *slack_msg
+
 # -----------------------------  Test front end for security ----------            
   scan-frontend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Security scan frontend"    
     steps:
       - checkout
       - run:
           name: frontend security check
           working_directory: ./frontend
           command: npm audit --audit-level=critical --force
-      - slack/notify:
-          event: fail
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [{"type": "plain_text",
-                      "text": "Udapeople : Failure in security scan for front-end << pipeline.number >>",
-                      "emoji": true }]
-                }
-              ]
-            }          
+      <<: *slack_msg
+
 # -----------------------------  Test front end for security ----------            
   scan-backend:
     <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Security scan backend"    
     steps:
       - checkout      
       - run:
           name: backend security check
           working_directory: ./backend
           command: npm audit --audit-level=critical --force
-      - slack/notify:
-          event: fail
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "fields": [{"type": "plain_text",
-                      "text": "Failure in security scan for back-end",
-                      "emoji": true }]
-                }
-              ]
-            }
+      <<: *slack_msg
 # --------------------------------------------------------------------------------
 #
 #         WORKFLOW  STEPS STARTS FROM HERE
