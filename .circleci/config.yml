@@ -58,7 +58,7 @@ jobs:
 # -----------------------------  Build front end and back end dependancies ----------------------
 
   build-frontend--dependency:
-   executor: node
+   <<: *dok_node
    steps:
       - checkout
       - run:
@@ -71,7 +71,7 @@ jobs:
             - frontend/node_modules
 
   build-backend--dependency:
-    executor: node
+    <<: *dok_node
     steps:
       - checkout
       - run:
