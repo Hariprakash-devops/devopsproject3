@@ -1,5 +1,18 @@
 version: 2.1
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+# defaults (like global variables dubstiuted below)
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+defaults: &dok_node
+    docker:
+      - image: circleci/node:13.8.0
 
+defaults: &dok_awscli
+    docker:
+      - image: circleci/node:13.8.0
+
+defaults: &dok_common
+    docker:
+      - image: circleci/node:13.8.0      
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #  list of commands used in job 
 #
@@ -46,8 +59,7 @@ commands:
 jobs:
 # -----------------------------  Build front end ----------------------
   build-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *dok_node
     steps:
       - checkout
       - restore_cache:
@@ -63,8 +75,7 @@ jobs:
 
 # -----------------------------  Build back end ----------------------
   build-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *dok_node
     steps:
       - checkout
       - restore_cache:
@@ -79,203 +90,68 @@ jobs:
           key: backend-build
 # -----------------------------  Test front end  ----------------------
   test-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *dok_node
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-                
+      - checkout
+      - run:
+          name: Junit coverage report
+          working_directory: ./frontend
+          command: npm install --save-dev jest-junit
+      - run:
+          name: Run tests with JUnit 
+          working_directory: ./frontend
+          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit && pwd && ls -la /tmp
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./testres
+      - store_test_results:
+          path: ./frontend/testres
+      - store_artifacts:
+          path: ./frontend/testres
+
+# -----------------------------  Test back end  ----------------------                
   test-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *dok_node
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-            
+      - checkout
+      - run:
+          name: Junit coverage reporte
+          working_directory: ./backend
+          command: npm install --save-dev jest-junit
+      - run:
+          name: Run tests with JUnit
+          working_directory: ./backend
+          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit && pwd
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./testres
+      - store_test_results:
+          path: ./backend/testres
+      - store_artifacts:
+          path: ./backend/testres
+
+# -----------------------------  Test front end for security ----------            
   scan-frontend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *dok_node
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-
+      - checkout
+      - run:
+          name: frontend security check
+          working_directory: ./frontend
+          command: npm audit --audit-level=critical
+# -----------------------------  Test front end for security ----------            
   scan-backend:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *dok_node
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout      
+      - run:
+          name: backend security check
+          working_directory: ./backend
+          command: npm audit --audit-level=critical
 
-  deploy-infrastructure:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      # Checkout code from git
-      - run:
-          name: Ensure back-end infrastructure exists
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/backend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your back-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
-              exit 1
-      - run:
-          name: Ensure front-end infrastructure exist
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your front-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
-              exit 1
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            # Your code here
-            exit 1
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
-
-  configure-infrastructure:
-    docker:
-      # Docker image here that supports Ansible
-    steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
-      - run:
-          name: Install dependencies
-          command: |
-            # Your code here
-            exit 1
-      - run:
-          name: Configure server
-          command: |
-            # Your code here
-            exit 1
-      # Here's where you will add some code to rollback on failure      
-
-  run-migrations:
-    docker:
-      # Docker image here that supports NodeJS
-    steps:
-      # Checkout code from git
-      - run:
-          name: Run migrations
-          command: |
-            # Your code here
-            exit 1
-      - run:
-          name: Send migration results to memstash
-          command: |
-            # Your code here
-            exit 1
-     # Here's where you will add some code to rollback on failure      
-
-  deploy-frontend:
-    docker:
-      # Docker image here that supports AWS CLI
-    steps:
-      # Checkout code from git
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
-      - run:
-          name: Deploy frontend objects
-          command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure      
-                    
-  deploy-backend:
-    docker:
-      # Docker image here that supports Ansible
-    steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
-          name: Deploy backend
-          command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
-
-  smoke-test:
-    docker:
-      # Lightweight Docker image 
-    steps:
-      # Checkout code from git
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
-      - run:
-          name: Backend smoke test.
-          command: |
-            # your code here
-      - run:
-          name: Frontend smoke test.
-          command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
-
-  cloudfront-update:
-    docker:
-      # Docker image here that supports AWS CLI
-    steps:
-      # Checkout code from git
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
-
-cleanup:
-    docker:
-      # Docker image here
-    steps:
-      # Checkout code from git
-      - run:
-          name: Get old stack workflow id
-          command: |
-            # your code here
-            export OldWorkflowID="the id here"
-            export STACKS=[] #put the list of stacks here
-      - run:
-          name: Remove old stacks and files
-          command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-            then
-              # your code here
-            fi
-            
-
+# --------------------------------------------------------------------------------
+#
+#         WORKFLOW  STEPS STARTS FROM HERE
+#
+# --------------------------------------------------------------------------------
 workflows:
   default:
     jobs:
@@ -289,22 +165,4 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: [test-feature-branch]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
-      - cloudfront-update:
-          requires: [smoke-test]
-      - cleanup:
-          requires: [cloudfront-update]
+      
