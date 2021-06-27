@@ -20,7 +20,7 @@ slackvarfail: &slack_msg
                 {
                   "type": "section",
                   "fields": [{"type": "plain_text",
-                      "text": "Udapeople : Build Failure # << pipeline.number >> for << pipeline.git.branch >> ",
+                      "text": "Udapeople build STEP : << MY_STEP_NAME >> Failure #<< pipeline.number >> for << pipeline.project.git_url >> / << pipeline.git.branch >> ",
                       "emoji": true }]
                 }
               ]
