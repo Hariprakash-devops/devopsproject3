@@ -127,7 +127,8 @@ jobs:
       - run:
           name: Run tests with JUnit 
           working_directory: ./frontend
-          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit && pwd && ls -la /tmp
+          command: 
+              npm test
           environment:
             JEST_JUNIT_OUTPUT_DIR: ./testres
       - store_test_results:
@@ -151,7 +152,8 @@ jobs:
       - run:
           name: Run tests with JUnit
           working_directory: ./backend
-          command: npm test -- --ci --runInBand --reporters=default --reporters=jest-junit && pwd
+          command: 
+              npm test
           environment:
             JEST_JUNIT_OUTPUT_DIR: ./testres
       - store_test_results:
@@ -171,7 +173,7 @@ jobs:
       - run:
           name: frontend security check
           working_directory: ./frontend
-          command: npm audit --audit-level=critical --force
+          command: npm audit fix --audit-level=critical --force
       - slack/notify:
           <<: *slack_msg
 
@@ -185,7 +187,7 @@ jobs:
       - run:
           name: backend security check
           working_directory: ./backend
-          command: npm audit --audit-level=critical --force
+          command: npm audit fix --audit-level=critical --force
       - slack/notify:
           <<: *slack_msg
 # --------------------------------------------------------------------------------
@@ -206,10 +208,11 @@ workflows:
       - test-backend:
           requires: [build-backend]
           context: slack-secrets
-      - scan-backend:
-          requires: [build-backend]
-          context: slack-secrets
       - scan-frontend:
           requires: [build-frontend]
           context: slack-secrets
+      - scan-backend:
+          requires: [build-backend]
+          context: slack-secrets
+
       
