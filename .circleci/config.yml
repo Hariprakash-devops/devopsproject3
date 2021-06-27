@@ -12,8 +12,7 @@ docvaraws: &dok_awscli
     docker:
       - image: circleci/aws-cli    
 
-slackvarfail: &slack_msg
-      - slack/notify:
+slackvarfail: &slack_msg      
           event: fail
           custom: |
             {
@@ -91,7 +90,8 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build          
-      <<: *slack_msg          
+      - slack/notify: 
+          <<: *slack_msg          
 
 # -----------------------------  Build back end ----------------------
   build-backend:
@@ -111,7 +111,8 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-      <<: *slack_msg       
+      - slack/notify:
+          <<: *slack_msg       
 # -----------------------------  Test front end  ----------------------
   test-frontend:
     <<: *dok_node
@@ -133,7 +134,8 @@ jobs:
           path: ./frontend/testres
       - store_artifacts:
           path: ./frontend/testres
-      <<: *slack_msg
+      - slack/notify:
+          <<: *slack_msg
 
 # -----------------------------  Test back end  ----------------------                
   test-backend:
@@ -156,7 +158,8 @@ jobs:
           path: ./backend/testres
       - store_artifacts:
           path: ./backend/testres
-      <<: *slack_msg
+      - slack/notify:
+          <<: *slack_msg
 
 # -----------------------------  Test front end for security ----------            
   scan-frontend:
@@ -169,7 +172,8 @@ jobs:
           name: frontend security check
           working_directory: ./frontend
           command: npm audit --audit-level=critical --force
-      <<: *slack_msg
+      - slack/notify:
+          <<: *slack_msg
 
 # -----------------------------  Test front end for security ----------            
   scan-backend:
@@ -182,7 +186,8 @@ jobs:
           name: backend security check
           working_directory: ./backend
           command: npm audit --audit-level=critical --force
-      <<: *slack_msg
+      - slack/notify:
+          <<: *slack_msg
 # --------------------------------------------------------------------------------
 #
 #         WORKFLOW  STEPS STARTS FROM HERE
