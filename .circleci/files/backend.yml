@@ -28,7 +28,7 @@ Resources:
       InstanceType: t2.micro
       SecurityGroups:
         - Ref: InstanceSecurityGroup
-      KeyName: udacityp3
+      #KeyName: udacityp3
       ImageId: ami-03d5c68bab01f3496        # Ubuntu Server 20.04 LTS (HVM), SSD Volume Type  
       Tags:
         - Key: Name
