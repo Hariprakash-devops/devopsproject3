@@ -229,12 +229,12 @@ jobs:
       - run:
           name: deploy the backend infrastructure
           command: |
-            aws cloudformation deploy \
-              --stack-name udapeoplep3-backend-wf1212 \
-              --template-file .circleci/files/backend.yml \              
-              --parameter-overrides ID="udap-wf1212" \
-              --region us-west-2 
-              --capabilities CAPABILITY_IAM
+            aws cloudformation deploy \            
+            --template-file .circleci/files/backend.yml \              
+            --stack-name udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+            --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --region us-west-2 \
+            --capabilities CAPABILITY_IAM
       - run:
           name: Ensure front-end infrastructure exist
           command: |
