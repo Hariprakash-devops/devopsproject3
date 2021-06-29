@@ -10,7 +10,7 @@ docvarnode: &dok_node
 
 docvaraws: &dok_awscli
     docker:
-      - image: circleci/aws-cli    
+      - image: amazon/aws-cli    
 
 docansibl: &dok_ansible
     docker:
