@@ -2,7 +2,7 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.4.2
 #  ------------------------------------------------------------------------------------------------------------------------------------------
-# defaults (like global variables dubstiuted below)
+#  defaults (like global variables dubstiuted below)
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 docvarnode: &dok_node
     docker:
@@ -11,6 +11,10 @@ docvarnode: &dok_node
 docvaraws: &dok_awscli
     docker:
       - image: circleci/aws-cli    
+
+docansibl: &dok_ansible
+    docker:
+      - image: python:3.7-alpine3.11 
 
 slackvarfail: &slack_msg      
           event: fail
@@ -25,7 +29,14 @@ slackvarfail: &slack_msg
                 }
               ]
             } 
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+#  list of parameters
+#  ------------------------------------------------------------------------------------------------------------------------------------------
 
+parameters:
+  workflow-id:
+    type: string
+    default: "${CIRCLE_WORKFLOW_ID}"
 
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #  list of commands used in job 
@@ -33,18 +44,24 @@ slackvarfail: &slack_msg
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 
 commands:
+# ----------------------------------   to destroy the aws infra ----------------------------------------------------------------------------
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      # Add parameter here   
+      workflow_id:
+        type: string  
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            # Your code here
+            echo "Destroying environment: <<parameters.workflow_id>> "
+            aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
+            aws s3 rm s3://udapeoplep3-prod-<<parameters.workflow_id>> --recursive
+            aws cloudformation delete-stack --stack-name udapeoplep3-frontend-prod-<<parameters.workflow_id>>            
             exit 1
 
+# ----------------------------------   to reverse the migration   --------------------------------------------------------------------------
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
@@ -195,11 +212,96 @@ jobs:
             npm audit fix --audit-level=critical --force
       - slack/notify:
           <<: *slack_msg
-# --------------------------------------------------------------------------------
+#   -------------------------------------------------------------------------
+#                   AWS  INFRA. PART start from here
+#   -------------------------------------------------------------------------
+
+  deploy-infrastructure:
+    <<: *dok_awscli
+    steps:
+      - checkout
+      - run:
+          name: install dependancy
+          command: yum install -y tar gzip
+      - run:
+          name: deploy the backend infrastructure
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \              
+              --stack-name="udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"                
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --stack-name udapeoplep3-frontend-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID}"               
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            BACKEND_AWS_PUBLIC_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=uda-backend-${CIRCLE_WORKFLOW_ID}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+            echo "http://$BACKEND_AWS_PUBLIC_IP:3030" > ~/output.txt
+            echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt
+            cat .circleci/outputs/backend_url.txt
+            cat ~/output.txt            
+            exit 1
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      - slack/notify:
+          <<: *slack_msg    
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"                        
+
+# -----------------------------  aws infra config  ---------------------            
+
+  configure-infrastructure:
+    <<: *dok_ansible
+    steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            exit 1
+      # Here's where you will add some code to rollback on failure      
+
+
+# -----------------------------  migration  ---------------------            
+  run-migrations:
+    docker:
+      # Docker image here that supports NodeJS
+    steps:
+      # Checkout code from git
+      - run:
+          name: Run migrations
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Send migration results to memstash
+          command: |
+            # Your code here
+            exit 1
+     # Here's where you will add some code to rollback on failure  
+
+# -------------------------------------------------------------------------------
 #
 #         WORKFLOW  STEPS STARTS FROM HERE
 #
-# --------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 workflows:
   default:
     jobs:
@@ -219,5 +321,10 @@ workflows:
       - scan-backend:
           requires: [build-backend]
           context: slack-secrets
-
+      - deploy-infrastructure:
+          requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
+          context: slack-secrets
+          filters:
+             branches:
+               only: [master]
       
