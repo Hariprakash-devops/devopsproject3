@@ -229,8 +229,10 @@ jobs:
           command: |
             aws cloudformation deploy \
               --stack-name udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7} \
-              --template file://.circleci/files/backend.yml \              
+              --template-file .circleci/files/backend.yml \              
               --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --region us-west-2 
+              --capabilities CAPABILITY_IAM
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -238,6 +240,8 @@ jobs:
               --stack-name udapeoplep3-frontend-${CIRCLE_WORKFLOW_ID} \
               --template file://.circleci/files/frontend.yml \
               --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID}"               
+              --region us-west-2 
+              --capabilities CAPABILITY_IAM              
       - run:
           name: Add back-end ip to ansible inventory
           command: |
