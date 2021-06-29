@@ -59,8 +59,8 @@ commands:
           command: |
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
-            aws s3 rm s3://udapeoplep3-prod-<<parameters.workflow_id>> --recursive
-            aws cloudformation delete-stack --stack-name udapeoplep3-frontend-prod-<<parameters.workflow_id>>            
+            aws s3 rm s3://udapeoplep3-<<parameters.workflow_id>> --recursive
+            aws cloudformation delete-stack --stack-name udapeoplep3-frontend-<<parameters.workflow_id>>            
             exit 1
 
 # ----------------------------------   to reverse the migration   --------------------------------------------------------------------------
@@ -227,23 +227,21 @@ jobs:
           name: install dependancy
           command: yum install -y tar gzip
       - run:
-          name: deploy the backend infrastructure
+          name: deploy back-end infrastructure
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --stack-name udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7} \
-              --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" 
-              # --region us-west-2 \
-              # --capabilities CAPABILITY_IAM
+              --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --region us-west-2  
       - run:
-          name: Ensure front-end infrastructure exist
+          name: deploy front-end infrastructure
           command: |
             aws cloudformation deploy \ 
-              --stack-name udapeoplep3-frontend-${CIRCLE_WORKFLOW_ID} \
-              --template file://.circleci/files/frontend.yml \
-              --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID}"               
-              --region us-west-2 
-              --capabilities CAPABILITY_IAM              
+              --template-file .circleci/files/frontend.yml \
+              --stack-name udapeoplep3-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --region us-west-2                
       - run:
           name: Add back-end ip to ansible inventory
           command: |
@@ -254,8 +252,7 @@ jobs:
             echo "http://$BACKEND_AWS_PUBLIC_IP:3030" > ~/output.txt
             echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt
             cat .circleci/outputs/backend_url.txt
-            cat ~/output.txt            
-            exit 1
+            cat ~/output.txt                        
       - persist_to_workspace:
           root: ~/
           paths:
