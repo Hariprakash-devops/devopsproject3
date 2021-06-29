@@ -212,6 +212,7 @@ jobs:
             npm audit fix --audit-level=critical --force
       - slack/notify:
           <<: *slack_msg
+
 #   -------------------------------------------------------------------------
 #                   AWS  INFRA. PART start from here
 #   -------------------------------------------------------------------------
@@ -228,8 +229,8 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \              
-              --stack-name="udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"                
+              --stack-name udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}"                
       - run:
           name: Ensure front-end infrastructure exist
           command: |
