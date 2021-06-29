@@ -281,8 +281,7 @@ jobs:
 
 # -----------------------------  migration  ---------------------            
   run-migrations:
-    docker:
-      # Docker image here that supports NodeJS
+    <<: *dok_node
     steps:
       # Checkout code from git
       - run:
