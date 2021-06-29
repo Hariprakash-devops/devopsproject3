@@ -1,7 +1,8 @@
 version: 2.1
+
 orbs:
   slack: circleci/slack@4.4.2
-  aws-cli: circleci/aws-cli@1.3.0
+  aws-cli: circleci/aws-cli@2.0.3
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #  defaults (like global variables dubstiuted below)
 #  ------------------------------------------------------------------------------------------------------------------------------------------
@@ -237,7 +238,7 @@ jobs:
       - run:
           name: Ensure front-end infrastructure exist
           command: |
-            aws cloudformation deploy \
+            aws cloudformation deploy \ 
               --stack-name udapeoplep3-frontend-${CIRCLE_WORKFLOW_ID} \
               --template file://.circleci/files/frontend.yml \
               --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID}"               
