@@ -48,8 +48,7 @@ parameters:
 commands:
 # ----------------------------------   to destroy the aws infra ----------------------------------------------------------------------------
   destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    <<: *dok_node
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.    
     parameters:
       workflow_id:
         type: string  
