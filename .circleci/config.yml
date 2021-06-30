@@ -57,6 +57,7 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
+            pip install awscli
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeoplep3-<<parameters.workflow_id>> --recursive
@@ -71,11 +72,8 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            cd ~/project/backend
-            if [[ -f "~/project/.circleci/output/db_migration_success" ]]; then
               npm i
-              npm run migration:revert
-            fi
+              npm run migration:revert            
 
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #    Jobs list startd from here    
@@ -426,6 +424,53 @@ jobs:
           <<: *slack_msg 
 # -----------------------------  Deploy complete  ----------------------------------
 
+# -----------------------------  start of smoke testing after deployment  ----------------------------
+  smoke-test:
+    <<: *dok_ansible
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl
+            pip install awscli
+      - run:
+          name: retrive backend url
+          command: |
+            pwd
+            cat .circleci/ansible/inventory.txt
+            cat ~/output.txt
+            export API_URL=`cat ~/output.txt`
+            echo "API_URL: $API_URL"
+      - run:
+          name: backend smoke test
+          command: |
+            # curl -s $API_URL/api/status
+            # cat $API_URL/api/status
+            if curl -s $API_URL/api/status
+            then
+              return 1
+            else
+              return 0
+            fi
+      - run:
+          name: Frontend smoke test
+          command: |
+            if curl -s http://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/ | grep "Welcome"
+            then
+              return 0
+            else
+              return 1
+            fi
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations  
+      - slack/notify:
+          <<: *slack_msg
+
+
 # -------------------------------------------------------------------------------
 #
 #         WORKFLOW  STEPS STARTS FROM HERE
@@ -468,5 +513,12 @@ workflows:
       - deploy-frontend:
           requires: [run-migrations]
           context: slack-secrets
-
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
+      # - cloudfront-update:
+      #     requires: [smoke-test]
+      # - prometheus-node-exporter:
+      #     requires: [cloudfront-update]
+      # - cleanup:
+      #     requires: [cloudfront-update]
 #  --------------------------  End of Job  ----------------------------------------          
