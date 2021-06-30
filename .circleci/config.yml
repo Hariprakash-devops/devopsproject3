@@ -221,6 +221,8 @@ jobs:
 
   deploy-infrastructure:
     <<: *dok_awscli
+    environment: 
+      MY_STEP_NAME: "Deploy Infrastructure"     
     steps:
       - checkout
       - run:
@@ -250,16 +252,130 @@ jobs:
               --output text)
             echo "http://$BACKEND_AWS_PUBLIC_IP:3030" > ~/output.txt
             echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt            
-            cat ~/output.txt    
-            exit 1        
+            cat ~/output.txt                
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      - slack/notify:
-          <<: *slack_msg
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - slack/notify:
+          <<: *slack_msg
+# -----------------------------  aws infra config  ---------------------  
+#                fingerprint taken from ssh of circle ci  
+#  ---------------------------------------------------------------------
+
+  configure-infrastructure:
+    <<: *dok_ansible
+    environment: 
+      MY_STEP_NAME: "Configure Infrastructure"     
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["3a:16:f7:4e:00:8e:d9:eb:8a:1c:0b:b1:3d:e6:43:6f"]
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible            
+      - run:
+          name: Configure server
+          command: |
+            pwd
+            cat .circleci/ansible/inventory.txt
+            echo ENVIRONMENT=production > "backend/.env"            
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
+            cat backend/.env
+            ls backend
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - slack/notify:
+          <<: *slack_msg                
+# -----------------------------  migration  -----------------------------------------            
+  run-migrations:
+    <<: *dok_node
+    environment: 
+      MY_STEP_NAME: "Run Migrations"
+    steps:
+      - checkout
+      - run:
+          name: Run migrations
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Send migration results to memstash
+          command: |
+            # Your code here
+            exit 1
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/outputs/
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+
+# -----------------------------  Deployment of app begins here  ---------------------            
+# -----------------------------  Deploy front-end  ----------------------------------
+  deploy-frontend:
+    <<: *dok_ansible
+    environment: 
+      MY_STEP_NAME: "Deploy Front-end"
+    steps:
+      # Checkout code from git
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+      - run:
+          name: Deploy frontend objects
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure      
+
+# -----------------------------  Deploy back-end  ----------------------------------                    
+  deploy-backend:
+    <<: *dok_ansible
+    environment: 
+      MY_STEP_NAME: "Deploy backend"       
+    steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Deploy backend
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure  
+
+# -----------------------------  Deploy complete  ----------------------------------
 
 # -------------------------------------------------------------------------------
 #
@@ -291,4 +407,17 @@ workflows:
           filters:
              branches:
                only: [master]
-      
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+          context: slack-secrets
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      #     context: slack-secrets
+      # - deploy-backend:
+      #     requires: [run-migrations] 
+      #     context: slack-secrets     
+      # - deploy-frontend:
+      #     requires: [deploy-backend]
+      #     context: slack-secrets
+
+#  --------------------------  End of Job  ----------------------------------------          
