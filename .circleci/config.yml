@@ -325,13 +325,8 @@ jobs:
             cat migration_output.txt      
       - run:
           name: Store migration result in a file.
-          command: |
-            sudo apt-get install grep
-            cd backend
-            if [grep -q "has been executed successfully." migration_output.txt]
-            then
-              touch ~/project/.circleci/output/db_migration_success
-            fi
+          command: |            
+            touch ~/project/.circleci/output/db_migration_success            
       - persist_to_workspace:
           root: ~/
           paths:
