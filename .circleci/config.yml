@@ -323,18 +323,18 @@ jobs:
             npm run build
             npm run migrations >> migration_output.txt
             cat migration_output.txt      
-      - run:
-          name: Store migration result in a file.
-          command: |            
-            cd backend
-            if [grep -q "has been executed successfully." migration_output.txt];
-            then
-              touch ~/project/.circleci/outputs/db_migration_success
-            fi
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/output/
+      # - run:
+      #     name: Store migration result in a file.
+      #     command: |            
+      #       cd backend
+      #       if [grep -q "has been executed successfully." migration_output.txt];
+      #       then
+      #         touch ~/project/.circleci/outputs/db_migration_success
+      #       fi
+      # - persist_to_workspace:
+      #     root: ~/
+      #     paths:
+      #       - project/.circleci/output/
       - destroy-environment:          
           workflow_id: "${CIRCLE_WORKFLOW_ID}"
       - slack/notify:
