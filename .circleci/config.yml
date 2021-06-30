@@ -71,16 +71,12 @@ commands:
     steps:
       - run:
           name: Revert migrations
-          # Add when this will run
+          when: on_fail
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
-            if(( $SUCCESS==1 )); 
-            then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+            cd ~/project/backend
+            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
+              npm i
+              npm run migration:revert
             fi
 
 #  ------------------------------------------------------------------------------------------------------------------------------------------
@@ -315,23 +311,31 @@ jobs:
       MY_STEP_NAME: "Run Migrations"
     steps:
       - checkout
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Run migrations
           command: |
-            # Your code here
-            exit 1
+            cd backend
+            npm install
+            npm run build
+            npm run migrations >> migration_output.txt
+            cat migration_output.txt      
       - run:
-          name: Send migration results to memstash
+          name: Store migration result in a file.
           command: |
-            # Your code here
-            exit 1
+            cd backend
+            if grep -q "has been executed successfully." migration_output.txt then
+              touch ~/project/.circleci/outputs/db_migration_success
+            fi      
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/outputs/
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID}"
-
+      - slack/notify:
+          <<: *slack_msg 
 # -----------------------------  Deployment of app begins here  ---------------------            
 # -----------------------------  Deploy front-end  ----------------------------------
   deploy-frontend:
@@ -339,42 +343,88 @@ jobs:
     environment: 
       MY_STEP_NAME: "Deploy Front-end"
     steps:
-      # Checkout code from git
+      - checkout
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            apk add --update curl nodejs npm
+            apk add --update curl tar
+            npm install webpack-dev-server -g
+            npm install
+            pip install awscli
       - run:
-          name: Get backend url
+          name: Frame and put backend url to env file
           command: |
-            # your code here
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            export API_URL=`cat ~/output.txt`
+            echo "API_URL: $API_URL"
+            echo ENVIRONMENT=production > "frontend/.env"
+            echo NODE_ENV=production >> "frontend/.env"
+            echo API_URL=$API_URL >> "frontend/.env"
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure      
-
+            cd ~/project/frontend
+            npm i
+            npm install typescript@rc
+            npm run build
+      - run:
+          name: copy frontend package to aws s3 bucket
+          command: |
+            cd ~/project/frontend
+            aws s3 cp dist s3://udapeoplep3-${CIRCLE_WORKFLOW_ID} --recursive
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/frontend/dist
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations     
+      - slack/notify:
+          <<: *slack_msg 
 # -----------------------------  Deploy back-end  ----------------------------------                    
   deploy-backend:
     <<: *dok_ansible
     environment: 
       MY_STEP_NAME: "Deploy backend"       
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
-      - run:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - add_ssh_keys:
+          fingerprints: ["3a:16:f7:4e:00:8e:d9:eb:8a:1c:0b:b1:3d:e6:43:6f"]
+      - attach_workspace:
+          at: ~/
+      - run: 
           name: Install dependencies
           command: |
-            # your code here
+            apk add --update curl nodejs npm
+            apk add --update ansible zip
+            apk add --update openssh-client tar gzip
+            pip install awscli
       - run:
-          name: Deploy backend
+          name: Build backend app
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
-
+            cd ~/project/backend
+            ls
+            cd ../
+            cd backend/ && tar -zcvf ../backend.tar.gz . && cd - 
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv backend.tar.gz ~/project/.circleci/ansible/roles/deploy/files/
+      - run:
+          name: Deploy backend Setup EC2 instance & copy compiled backend to the EC2 instance
+          command: |
+            # ls ~/project/.circleci/ansible/roles/deploy/files/
+            cd ~/project/backend
+            ansible-galaxy install weareinteractive.environment
+            cat ~/project/.circleci/ansible/inventory.txt
+            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+      - revert-migrations 
+      - slack/notify:
+          <<: *slack_msg 
 # -----------------------------  Deploy complete  ----------------------------------
 
 # -------------------------------------------------------------------------------
@@ -385,24 +435,24 @@ jobs:
 workflows:
   default:
     jobs:
-      # - build-frontend:
-      #     context: slack-secrets
-      # - build-backend:
-      #     context: slack-secrets
-      # - test-frontend:
-      #     requires: [build-frontend]
-      #     context: slack-secrets
-      # - test-backend:
-      #     requires: [build-backend]
-      #     context: slack-secrets
-      # - scan-frontend:
-      #     requires: [build-frontend]
-      #     context: slack-secrets
-      # - scan-backend:
-      #     requires: [build-backend]
-      #     context: slack-secrets
+      - build-frontend:
+          context: slack-secrets
+      - build-backend:
+          context: slack-secrets
+      - test-frontend:
+          requires: [build-frontend]
+          context: slack-secrets
+      - test-backend:
+          requires: [build-backend]
+          context: slack-secrets
+      - scan-frontend:
+          requires: [build-frontend]
+          context: slack-secrets
+      - scan-backend:
+          requires: [build-backend]
+          context: slack-secrets
       - deploy-infrastructure:
-      #    requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
           context: slack-secrets
           filters:
              branches:
@@ -410,14 +460,14 @@ workflows:
       - configure-infrastructure:
           requires: [deploy-infrastructure]
           context: slack-secrets
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
-      #     context: slack-secrets
-      # - deploy-backend:
-      #     requires: [run-migrations] 
-      #     context: slack-secrets     
-      # - deploy-frontend:
-      #     requires: [deploy-backend]
-      #     context: slack-secrets
+      - run-migrations:
+          requires: [configure-infrastructure]
+          context: slack-secrets
+      - deploy-backend:
+          requires: [run-migrations] 
+          context: slack-secrets     
+      - deploy-frontend:
+          requires: [deploy-backend]
+          context: slack-secrets
 
 #  --------------------------  End of Job  ----------------------------------------          
