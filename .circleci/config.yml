@@ -250,7 +250,7 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - slack/notify:
           <<: *slack_msg
 # -----------------------------  aws infra config  ---------------------  
@@ -297,7 +297,7 @@ jobs:
           paths:
             - project/backend
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - slack/notify:
           <<: *slack_msg                
 # -----------------------------  migration  -----------------------------------------            
@@ -330,7 +330,7 @@ jobs:
       #     paths:
       #       - project/.circleci/output/
       - destroy-environment:          
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - slack/notify:
           <<: *slack_msg
 # -----------------------------  Deployment of app begins here  ---------------------            
@@ -376,7 +376,7 @@ jobs:
           paths:
             - project/frontend/dist
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations     
       - slack/notify:
           <<: *slack_msg 
@@ -418,7 +418,7 @@ jobs:
             cat ~/project/.circleci/ansible/inventory.txt
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations 
       - slack/notify:
           <<: *slack_msg 
@@ -436,6 +436,15 @@ jobs:
           command: |
             apk add --update curl
             pip install awscli
+      - run:
+          name: Frontend smoke test
+          command: |
+            if curl -s http://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/ | grep "Welcome"
+            then
+              return 0
+            else
+              return 1
+            fi            
       - run:
           name: retrive backend url
           command: |
@@ -465,7 +474,7 @@ jobs:
               return 1
             fi
       - destroy-environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID}"
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations  
       - slack/notify:
           <<: *slack_msg
@@ -515,6 +524,7 @@ workflows:
           context: slack-secrets
       - smoke-test:
           requires: [deploy-backend, deploy-frontend]
+          context: slack-secrets
       # - cloudfront-update:
       #     requires: [smoke-test]
       # - prometheus-node-exporter:
