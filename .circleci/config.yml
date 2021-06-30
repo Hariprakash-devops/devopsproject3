@@ -326,7 +326,11 @@ jobs:
       - run:
           name: Store migration result in a file.
           command: |            
-            touch ~/project/.circleci/output/db_migration_success            
+            cd backend
+            if [grep -q "has been executed successfully." migration_output.txt];
+            then
+              touch ~/project/.circleci/outputs/db_migration_success
+            fi
       - persist_to_workspace:
           root: ~/
           paths:
@@ -434,33 +438,33 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend:
-          context: slack-secrets
-      - build-backend:
-          context: slack-secrets
-      - test-frontend:
-          requires: [build-frontend]
-          context: slack-secrets
-      - test-backend:
-          requires: [build-backend]
-          context: slack-secrets
-      - scan-frontend:
-          requires: [build-frontend]
-          context: slack-secrets
-      - scan-backend:
-          requires: [build-backend]
-          context: slack-secrets
-      - deploy-infrastructure:
-          requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
-          context: slack-secrets
-          filters:
-            branches:
-              only: [master]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-          context: slack-secrets
+      # - build-frontend:
+      #     context: slack-secrets
+      # - build-backend:
+      #     context: slack-secrets
+      # - test-frontend:
+      #     requires: [build-frontend]
+      #     context: slack-secrets
+      # - test-backend:
+      #     requires: [build-backend]
+      #     context: slack-secrets
+      # - scan-frontend:
+      #     requires: [build-frontend]
+      #     context: slack-secrets
+      # - scan-backend:
+      #     requires: [build-backend]
+      #     context: slack-secrets
+      # - deploy-infrastructure:
+      #     requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
+      #     context: slack-secrets
+      #     filters:
+      #       branches:
+      #         only: [master]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      #     context: slack-secrets
       - run-migrations:
-          requires: [configure-infrastructure]
+      #    requires: [configure-infrastructure]
           context: slack-secrets
       # - deploy-backend:
       #     requires: [run-migrations] 
