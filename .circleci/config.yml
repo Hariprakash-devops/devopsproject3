@@ -49,7 +49,6 @@ commands:
 # ----------------------------------   to destroy the aws infra ----------------------------------------------------------------------------
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID. 
-    when: on_fail   
     parameters:
       workflow_id:
         type: string  
@@ -337,7 +336,7 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/output/
-      - destroy-environment:
+      - destroy-environment:          
           workflow_id: "${CIRCLE_WORKFLOW_ID}"
       - slack/notify:
           <<: *slack_msg
