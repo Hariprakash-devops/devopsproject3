@@ -49,6 +49,7 @@ commands:
 # ----------------------------------   to destroy the aws infra ----------------------------------------------------------------------------
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    executor: aws-cli/default
     parameters:
       workflow_id:
         type: string  
@@ -432,39 +433,39 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend:
-          context: slack-secrets
-      - build-backend:
-          context: slack-secrets
-      - test-frontend:
-          requires: [build-frontend]
-          context: slack-secrets
-      - test-backend:
-          requires: [build-backend]
-          context: slack-secrets
-      - scan-frontend:
-          requires: [build-frontend]
-          context: slack-secrets
-      - scan-backend:
-          requires: [build-backend]
-          context: slack-secrets
-      - deploy-infrastructure:
-          requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
-          context: slack-secrets
-          filters:
-             branches:
-               only: [master]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-          context: slack-secrets
-      - run-migrations:
-          requires: [configure-infrastructure]
-          context: slack-secrets
-      - deploy-backend:
-          requires: [run-migrations] 
-          context: slack-secrets     
-      - deploy-frontend:
-          requires: [deploy-backend]
-          context: slack-secrets
+      # - build-frontend:
+      #     context: slack-secrets
+      # - build-backend:
+      #     context: slack-secrets
+      # - test-frontend:
+      #     requires: [build-frontend]
+      #     context: slack-secrets
+      # - test-backend:
+      #     requires: [build-backend]
+      #     context: slack-secrets
+      # - scan-frontend:
+      #     requires: [build-frontend]
+      #     context: slack-secrets
+      # - scan-backend:
+      #     requires: [build-backend]
+      #     context: slack-secrets
+      # - deploy-infrastructure:
+      #     requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
+      #     context: slack-secrets
+      #     filters:
+      #        branches:
+      #          only: [master]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      #     context: slack-secrets
+       - run-migrations:
+      #     requires: [configure-infrastructure]
+           context: slack-secrets
+      # - deploy-backend:
+      #     requires: [run-migrations] 
+      #     context: slack-secrets     
+      # - deploy-frontend:
+      #     requires: [deploy-backend]
+      #     context: slack-secrets
 
 #  --------------------------  End of Job  ----------------------------------------          
