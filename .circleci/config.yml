@@ -325,7 +325,8 @@ jobs:
           name: Store migration result in a file.
           command: |
             cd backend
-            if grep -q "has been executed successfully." migration_output.txt then
+            if [grep -q "has been executed successfully." migration_output.txt] 
+            then
               touch ~/project/.circleci/outputs/db_migration_success
             fi      
       - persist_to_workspace:
