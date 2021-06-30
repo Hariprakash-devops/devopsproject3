@@ -66,8 +66,7 @@ commands:
 
 # ----------------------------------   to reverse the migration   --------------------------------------------------------------------------
   revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
-    <<: *dok_node
+    description: Revert the last migration if successfully run in the current workflow.    
     steps:
       - run:
           name: Revert migrations
