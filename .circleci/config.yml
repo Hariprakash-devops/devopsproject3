@@ -57,10 +57,6 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            sudo apt-get update && sudo apt-get install -yy less
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install            
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeoplep3-<<parameters.workflow_id>> --recursive
@@ -376,7 +372,7 @@ jobs:
           name: copy frontend package to aws s3 bucket
           command: |
             cd ~/project/frontend
-            aws s3 cp dist s3://udapeoplep3-${CIRCLE_WORKFLOW_ID} --recursive
+            aws s3 cp dist s3://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - persist_to_workspace:
           root: ~/
           paths:
@@ -438,39 +434,39 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend:
-          context: slack-secrets
-      - build-backend:
-          context: slack-secrets
-      - test-frontend:
-          requires: [build-frontend]
-          context: slack-secrets
-      - test-backend:
-          requires: [build-backend]
-          context: slack-secrets
-      - scan-frontend:
-          requires: [build-frontend]
-          context: slack-secrets
-      - scan-backend:
-          requires: [build-backend]
-          context: slack-secrets
-      - deploy-infrastructure:
-          requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
-          context: slack-secrets
-          filters:
-            branches:
-              only: [master]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-          context: slack-secrets
-      - run-migrations:
-          requires: [configure-infrastructure]
-          context: slack-secrets
-      - deploy-backend:
-          requires: [run-migrations] 
-          context: slack-secrets     
+      # - build-frontend:
+      #     context: slack-secrets
+      # - build-backend:
+      #     context: slack-secrets
+      # - test-frontend:
+      #     requires: [build-frontend]
+      #     context: slack-secrets
+      # - test-backend:
+      #     requires: [build-backend]
+      #     context: slack-secrets
+      # - scan-frontend:
+      #     requires: [build-frontend]
+      #     context: slack-secrets
+      # - scan-backend:
+      #     requires: [build-backend]
+      #     context: slack-secrets
+      # - deploy-infrastructure:
+      #     requires: [build-frontend, build-backend, test-frontend, test-backend, scan-frontend, scan-backend]
+      #     context: slack-secrets
+      #     filters:
+      #       branches:
+      #         only: [master]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      #     context: slack-secrets
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      #     context: slack-secrets
+      # - deploy-backend:
+      #     requires: [run-migrations] 
+      #     context: slack-secrets     
       - deploy-frontend:
-          requires: [run-migrations]
+      #    requires: [run-migrations]
           context: slack-secrets
 
 #  --------------------------  End of Job  ----------------------------------------          
