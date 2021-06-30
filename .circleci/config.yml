@@ -470,7 +470,7 @@ workflows:
           requires: [run-migrations] 
           context: slack-secrets     
       - deploy-frontend:
-          requires: [deploy-backend]
+          requires: [run-migrations]
           context: slack-secrets
 
 #  --------------------------  End of Job  ----------------------------------------          
