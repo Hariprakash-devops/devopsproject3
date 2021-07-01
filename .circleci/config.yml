@@ -244,13 +244,11 @@ jobs:
             echo "http://$BACKEND_AWS_PUBLIC_IP:3030" > ~/output.txt
             echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt            
             cat ~/output.txt                
-            ls
-            cd ..
-            ls
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+            - output.txt
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - slack/notify:
@@ -319,18 +317,14 @@ jobs:
             npm run build
             npm run migrations >> migration_output.txt
             cat migration_output.txt      
-      # - run:
-      #     name: Store migration result in a file.
-      #     command: |            
-      #       cd backend
-      #       if [grep -q "has been executed successfully." migration_output.txt];
-      #       then
-      #         touch ~/project/.circleci/outputs/db_migration_success
-      #       fi
-      # - persist_to_workspace:
-      #     root: ~/
-      #     paths:
-      #       - project/.circleci/output/
+      - run:
+          name: Store migration result in a file.
+          command: |                        
+              touch ~/project/.circleci/output/db_migration_success            
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/output/
       - destroy-environment:          
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - slack/notify:
@@ -452,12 +446,6 @@ jobs:
           command: |
             pwd
             cat .circleci/ansible/inventory.txt
-            ls
-            cd ..
-            ls
-            cd project
-            ls
-            cd .circleci
             ls
             cat ~/output.txt
             export API_URL=`cat ~/output.txt`
