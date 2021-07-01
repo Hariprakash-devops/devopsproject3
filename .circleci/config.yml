@@ -57,16 +57,10 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            pip=$(sudo /root/.local/bin/pip -V | cut -c 1-3)
-            if [[ pip != "pip" ]]; then
-                apt-get install sudo
-                echo "Installing pip..."
-                curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
-                sudo /workplace/user/package/src/EnvImprovement/bin/python2.7 get-pip.py --user
-            else
-                echo "Pip detected."
-            fi                        
-            pip install awscli --upgrade --user
+            apk add --no-cache python3 py3-pip \
+            && pip3 install --upgrade pip \
+            && pip3 install awscli \
+            && rm -rf /var/cache/apk/*
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeoplep3-udap-<<parameters.workflow_id>> --recursive
@@ -80,8 +74,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-              apt-get install nodejs -y
-              npm install
+              apk add --update tar gzip curl nodejs npm
               npm run migration:revert            
 
 #  ------------------------------------------------------------------------------------------------------------------------------------------
@@ -326,15 +319,7 @@ jobs:
             npm install
             npm run build
             npm run migrations >> migration_output.txt
-            cat migration_output.txt      
-      # - run:
-      #     name: Store migration result in a file.
-      #     command: |                
-      #         touch ~/project/.circleci/db_migration_success
-      # - persist_to_workspace:
-      #     root: ~/
-      #     paths:
-      #       - project/.circleci/output/
+            cat migration_output.txt            
       - destroy-environment:          
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - slack/notify:
@@ -528,9 +513,9 @@ jobs:
               echo "Old Workflow ID: ${OldWorkflowID}"
               if [ "${OldWorkflowID}" != "<< pipeline.parameters.workflow-id >>" ]
               then
-                aws s3 rm "s3://udapeople-udap-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID:0:7}"
-                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID:0:7}"
+                aws s3 rm "s3://udapeople-udap-${CIRCLE_WORKFLOW_ID:5:7}" --recursive
+                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID:5:7}"
+                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID:5:7}"
               fi
   
         - slack/notify:
