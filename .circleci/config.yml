@@ -60,7 +60,7 @@ commands:
             pip install awscli
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
-            aws s3 rm s3://udapeoplep3-<<parameters.workflow_id>> --recursive
+            aws s3 rm s3://udapeoplep3-udap-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack --stack-name udapeoplep3-frontend-<<parameters.workflow_id>>            
             exit 1
 
@@ -450,6 +450,9 @@ jobs:
           command: |
             pwd
             cat .circleci/ansible/inventory.txt
+            ls
+            cd ..
+            ls
             cat ~/output.txt
             export API_URL=`cat ~/output.txt`
             echo "API_URL: $API_URL"
