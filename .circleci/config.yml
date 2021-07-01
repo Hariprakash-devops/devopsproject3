@@ -321,7 +321,9 @@ jobs:
           name: Store migration result in a file.
           command: |  
               cd ..
-              ls                      
+              ls 
+              cd project/.circleci/
+              ls                     
               touch ~/project/.circleci/output/db_migration_success            
       - persist_to_workspace:
           root: ~/
