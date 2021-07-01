@@ -242,7 +242,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
             echo "http://$BACKEND_AWS_PUBLIC_IP:3030" > ~/output.txt
-            echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt            
+            echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt                 
             cat ~/output.txt                
       - persist_to_workspace:
           root: ~/
@@ -317,18 +317,14 @@ jobs:
             npm run build
             npm run migrations >> migration_output.txt
             cat migration_output.txt      
-      - run:
-          name: Store migration result in a file.
-          command: |  
-              cd ..
-              ls 
-              cd project/.circleci/
-              ls                     
-              touch ~/project/.circleci/output/db_migration_success            
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/output/
+      # - run:
+      #     name: Store migration result in a file.
+      #     command: |                
+      #         touch ~/project/.circleci/db_migration_success
+      # - persist_to_workspace:
+      #     root: ~/
+      #     paths:
+      #       - project/.circleci/output/
       - destroy-environment:          
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - slack/notify:
