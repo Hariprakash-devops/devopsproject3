@@ -75,6 +75,9 @@ commands:
           when: on_fail
           command: |
               apk add --update tar gzip curl nodejs npm
+              ls
+              cd /backend
+              ls
               npm run migration:revert            
 
 #  ------------------------------------------------------------------------------------------------------------------------------------------
@@ -445,7 +448,7 @@ jobs:
             # cat $API_URL/api/status
             if curl -s $API_URL/api/status
             then
-              return 1
+              return 0
             else
               return 1
             fi
@@ -454,7 +457,7 @@ jobs:
           command: |
             if curl -s http://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/ | grep "Welcome"
             then
-              return 0
+              return 1
             else
               return 1
             fi
