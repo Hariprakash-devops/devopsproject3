@@ -76,7 +76,7 @@ commands:
           command: |
               apk add --update tar gzip curl nodejs npm
               ls
-              cd /backend
+              cd backend
               ls
               npm run migration:revert            
 
