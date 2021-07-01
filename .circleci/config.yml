@@ -61,8 +61,7 @@ commands:
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeoplep3-udap-<<parameters.workflow_id>> --recursive
-            aws cloudformation delete-stack --stack-name udapeoplep3-frontend-<<parameters.workflow_id>>            
-            exit 1
+            aws cloudformation delete-stack --stack-name udapeoplep3-frontend-<<parameters.workflow_id>>
 
 # ----------------------------------   to reverse the migration   --------------------------------------------------------------------------
   revert-migrations:
@@ -245,6 +244,9 @@ jobs:
             echo "http://$BACKEND_AWS_PUBLIC_IP:3030" > ~/output.txt
             echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt            
             cat ~/output.txt                
+            ls
+            cd ..
+            ls
       - persist_to_workspace:
           root: ~/
           paths:
@@ -452,6 +454,10 @@ jobs:
             cat .circleci/ansible/inventory.txt
             ls
             cd ..
+            ls
+            cd project
+            ls
+            cd .circleci
             ls
             cat ~/output.txt
             export API_URL=`cat ~/output.txt`
