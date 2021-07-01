@@ -57,7 +57,15 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            pip install awscli
+            pip=$(sudo /root/.local/bin/pip -V | cut -c 1-3)
+            if [[ pip != "pip" ]]; then
+                echo "Installing pip..."
+                curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+                sudo /workplace/user/package/src/EnvImprovement/bin/python2.7 get-pip.py --user
+            else
+                echo "Pip detected."
+            fi            
+            pip install awscli --upgrade --user
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeoplep3-backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeoplep3-udap-<<parameters.workflow_id>> --recursive
@@ -71,6 +79,13 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
+              if command --version node &>/dev/null; then
+                  echo "Node note installed installing..."
+                  curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
+                  sudo apt-get install nodejs -y
+              else
+                  echo "Node has already been installed."      
+              fi              
               npm i
               npm run migration:revert            
 
@@ -489,23 +504,16 @@ jobs:
 
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
-              --parameter-overrides WorkflowID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides WorkflowID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-cloudfront
 
-            if printf '%s\n' "${STACKS[@]}" | grep -q "$OLD_WORKFLOW_ID"; then
-              echo "Removing previous stack"
-              aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OLD_WORKFLOW_ID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OLD_WORKFLOW_ID}"
-            fi
-      
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations    
       - slack/notify:
           <<: *slack_msg
   
-# -----------------------------  Clean up the mess  ----------------------------
+# -----------------------------  Clean up the mess dopnt want AWs to charge ----------------------------
   cleanup:
       docker:
         - image: cimg/base:2020.01
@@ -525,9 +533,9 @@ jobs:
               echo "Old Workflow ID: ${OldWorkflowID}"
               if [ "${OldWorkflowID}" != "<< pipeline.parameters.workflow-id >>" ]
               then
-                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+                aws s3 rm "s3://udapeople-udap-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID:0:7}"
+                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID:0:7}"
               fi
   
         - slack/notify:
