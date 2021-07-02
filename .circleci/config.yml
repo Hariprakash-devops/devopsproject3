@@ -74,11 +74,9 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-              apk add --update tar gzip curl nodejs npm
-              ls
-              cd backend
-              ls
-              npm run migration:revert            
+              apk add --update tar gzip curl nodejs npm              
+              cd backend              
+              npm run migrations:revert
 
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #    Jobs list startd from here    
@@ -445,7 +443,7 @@ jobs:
           name: backend smoke test
           command: |
             # curl -s $API_URL/api/status
-            # cat $API_URL/api/status
+            cat $API_URL/api/status
             if curl -s $API_URL/api/status
             then
               return 0
