@@ -74,7 +74,8 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-              apk add --update tar gzip curl nodejs npm              
+              apk add --update tar gzip curl nodejs npm  
+              npm install -g typescript            
               cd backend              
               npm run migrations:revert
 
@@ -442,13 +443,12 @@ jobs:
       - run:
           name: backend smoke test
           command: |
-            # curl -s $API_URL/api/status
-            cat $API_URL/api/status
+            curl -s $API_URL/api/status            
             if curl -s $API_URL/api/status
             then
-              return 0
-            else
               return 1
+            else
+              return 0
             fi
       - run:
           name: Frontend smoke test
