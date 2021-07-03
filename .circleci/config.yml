@@ -88,7 +88,7 @@ commands:
 
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 #    Jobs list startd from here    
-#
+#    the sequence of jobs will be in work flow
 #
 #  ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -513,7 +513,6 @@ jobs:
               --template-file .circleci/files/cloudfront.yml \
               --parameter-overrides WorkflowID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-cloudfront
-
       - destroy-environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
