@@ -148,7 +148,7 @@ jobs:
           name: Run tests with JUnit 
           working_directory: ./frontend
           command:               
-              npm i
+#              npm i --force
               npm test
           environment:
             JEST_JUNIT_OUTPUT_DIR: ./testres
@@ -172,8 +172,8 @@ jobs:
           name: Run tests with JUnit
           working_directory: ./backend
           command: 
-              npm i
-              npm test
+#              npm i --force
+              npm test 
           environment:
             JEST_JUNIT_OUTPUT_DIR: ./testres
       - store_test_results:
@@ -196,7 +196,7 @@ jobs:
           name: frontend security check
           working_directory: ./frontend
           command: 
-            npm i
+#            npm i --force
             npm audit fix --audit-level=critical --force
 #      - slack/notify:
 #          <<: *slack_msg
