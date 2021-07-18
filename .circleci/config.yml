@@ -238,7 +238,7 @@ jobs:
               --template-file .circleci/files/backend.yml \
               --stack-name udapeoplep3-backend-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --region us-west-2
+              --region us-east-1
       - run:
           name: deploy front-end infrastructure
           command: |
@@ -246,7 +246,7 @@ jobs:
               --template-file .circleci/files/frontend.yml \
               --stack-name udapeoplep3-frontend-${CIRCLE_WORKFLOW_ID:0:7} \
               --parameter-overrides ID="udap-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --region us-west-2
+              --region us-east-1
       - run:
           name: Add back-end ip to ansible inventory
           command: |
@@ -478,7 +478,7 @@ jobs:
       - run:
           name: Frontend smoke test
           command: |
-            if curl -s http://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-west-2.amazonaws.com/ | grep "Welcome"
+            if curl -s http://udapeoplep3-udap-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.us-east-1.amazonaws.com/ | grep "Welcome"
             then
               return 0
             else
