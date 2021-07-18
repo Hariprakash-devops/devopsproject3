@@ -107,7 +107,7 @@ jobs:
           name: Build front-end
           working_directory: ./frontend
           command:             
-            npm i
+#            npm i
             npm run build                        
       - save_cache:
           paths: [frontend/node_modules]
@@ -128,7 +128,7 @@ jobs:
           name: Back-end build
           working_directory: ./backend
           command:              
-             npm i
+#             npm i
              npm run build             
       - save_cache:
           paths: [backend/node_modules]
@@ -595,7 +595,7 @@ workflows:
       - cloudfront-update:
           requires: [smoke-test]
 #          context: slack-secrets      
-      # - cleanup:
-      #     requires: [cloudfront-update]
-      #     context: slack-secrets
+      - cleanup:
+          requires: [cloudfront-update]
+#          context: slack-secrets
 #  --------------------------  End of Job  ----------------------------------------          
